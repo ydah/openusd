@@ -13,6 +13,13 @@ require_relative "openusd/layer"
 require_relative "openusd/format/usda/lexer"
 require_relative "openusd/format/usda/parser"
 require_relative "openusd/format/usda/writer"
+require_relative "openusd/asset_resolver"
+require_relative "openusd/composition"
+require_relative "openusd/metadata_view"
+require_relative "openusd/attribute"
+require_relative "openusd/relationship"
+require_relative "openusd/prim"
+require_relative "openusd/stage"
 
 module OpenUSD
 end
