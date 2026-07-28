@@ -17,7 +17,9 @@ module OpenUSD
       @references = references.map { |reference| normalize_reference(reference) }
       @variant_sets = variant_sets.dup
       @children = []
+      @child_index = {}
       @properties = []
+      @property_index = {}
       @parent = nil
     end
 
@@ -37,10 +39,11 @@ module OpenUSD
 
     def add_child(child)
       raise OpenUSD::TypeError, "child must be a PrimSpec" unless child.is_a?(PrimSpec)
-      raise PathError, "duplicate child prim: #{child.name}" if child_named(child.name)
+      raise PathError, "duplicate child prim: #{child.name}" if @child_index.key?(child.name)
 
       child.parent = self
       children << child
+      @child_index[child.name] = child
       child
     end
 
@@ -51,27 +54,29 @@ module OpenUSD
       return unless child
 
       children.delete(child)
+      @child_index.delete(name.to_s)
       child.parent = nil
       child
     end
 
     # @return [PrimSpec, nil] direct child by name
     def child_named(name)
-      children.find { |child| child.name == name.to_s }
+      @child_index[name.to_s]
     end
 
     def add_property(property)
       valid = property.is_a?(AttributeSpec) || property.is_a?(RelationshipSpec)
       raise OpenUSD::TypeError, "property must be an AttributeSpec or RelationshipSpec" unless valid
-      raise PathError, "duplicate property: #{property.name}" if property_named(property.name)
+      raise PathError, "duplicate property: #{property.name}" if @property_index.key?(property.name)
 
       properties << property
+      @property_index[property.name] = property
       property
     end
 
     # @return [AttributeSpec, RelationshipSpec, nil] authored property by name
     def property_named(name)
-      properties.find { |property| property.name == name.to_s }
+      @property_index[name.to_s]
     end
 
     # Remove an authored property by name.
@@ -79,6 +84,7 @@ module OpenUSD
     def remove_property(name)
       property = property_named(name)
       properties.delete(property)
+      @property_index.delete(name.to_s)
       property
     end
 

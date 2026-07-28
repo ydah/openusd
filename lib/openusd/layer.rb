@@ -31,6 +31,7 @@ module OpenUSD
       @identifier = identifier&.to_s
       @metadata = metadata.dup
       @root_prims = []
+      @root_prim_index = {}
       root_prims.each { |prim| add_root_prim(prim) }
     end
 
@@ -40,10 +41,11 @@ module OpenUSD
 
     def add_root_prim(prim)
       raise OpenUSD::TypeError, "root prim must be a PrimSpec" unless prim.is_a?(PrimSpec)
-      raise PathError, "duplicate root prim: #{prim.name}" if root_prim_named(prim.name)
+      raise PathError, "duplicate root prim: #{prim.name}" if @root_prim_index.key?(prim.name)
 
       prim.parent = nil
       root_prims << prim
+      @root_prim_index[prim.name] = prim
       prim
     end
 
@@ -52,12 +54,13 @@ module OpenUSD
     def remove_root_prim(name)
       prim = root_prim_named(name)
       root_prims.delete(prim)
+      @root_prim_index.delete(name.to_s)
       prim
     end
 
     # @return [PrimSpec, nil] root prim with the requested name
     def root_prim_named(name)
-      root_prims.find { |prim| prim.name == name.to_s }
+      @root_prim_index[name.to_s]
     end
 
     def prim_at(path)
