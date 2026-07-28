@@ -5,8 +5,11 @@ module OpenUSD
   class Path
     include Comparable
 
+    # Reusable USD identifier fragment.
     IDENTIFIER = /[\p{L}_][\p{L}\p{N}_]*/u
+    # Validation expression for prim names.
     PRIM_NAME = /\A#{IDENTIFIER}\z/u
+    # Validation expression for namespaced property names.
     PROPERTY_NAME = /\A#{IDENTIFIER}(?::#{IDENTIFIER})*\z/u
 
     attr_reader :property_name
@@ -92,6 +95,7 @@ module OpenUSD
       raise PathError, "property name must be a string"
     end
 
+    # Compare paths by their canonical string form.
     def <=>(other)
       @value <=> self.class.parse(other).to_s
     rescue PathError
@@ -103,14 +107,17 @@ module OpenUSD
     end
     alias == eql?
 
+    # @return [Integer] value hash compatible with {#eql?}
     def hash
       @value.hash
     end
 
+    # @return [String] canonical path text
     def to_s
       @value
     end
 
+    # @return [String] developer representation
     def inspect
       "#<#{self.class} #{@value.inspect}>"
     end

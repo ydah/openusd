@@ -28,7 +28,9 @@ require_relative "openusd/schema/mesh"
 require_relative "openusd/schema/camera"
 require_relative "openusd/schema/material"
 require_relative "openusd/schema/scope"
+require_relative "openusd/cli"
 
+# Pure Ruby APIs for reading, composing, editing, and writing OpenUSD assets.
 module OpenUSD
 end
 

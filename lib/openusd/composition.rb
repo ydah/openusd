@@ -5,7 +5,10 @@ require "pathname"
 module OpenUSD
   # Builds the v1 root/sublayer/reference composition index.
   class Composition
+    # Internal prim-like opinion for a selected variant.
     VariantOpinion = Data.define(:properties, :metadata, :type_name) do
+      # Find a property in the selected variant.
+      # @api private
       def property_named(name)
         properties.find { |property| property.name == name.to_s }
       end

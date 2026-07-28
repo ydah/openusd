@@ -17,10 +17,12 @@ module OpenUSD
         define_method("#{method_name}=") { |value| set(attribute_name, type_name, value) }
       end
 
+      # @return [Token, nil] authored subdivision scheme
       def subdivision_scheme
         get("subdivisionScheme")
       end
 
+      # Author the subdivision scheme token.
       def subdivision_scheme=(value)
         set("subdivisionScheme", "token", value)
       end

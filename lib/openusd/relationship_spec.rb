@@ -17,12 +17,15 @@ module OpenUSD
       @targets = Array(paths).map { |path| Path.parse(path) }
     end
 
+    # Add a target unless it is already present.
+    # @return [Path]
     def add_target(path)
       target = Path.parse(path)
       @targets << target unless @targets.include?(target)
       target
     end
 
+    # @return [Hash] semantic representation used for equality
     def to_h
       { name: name, targets: targets, custom: custom, metadata: metadata }
     end

@@ -6,16 +6,22 @@ module OpenUSD
     attr_reader :root_layer, :resolver, :pseudo_root, :edit_target
 
     class << self
+      # Open a composed stage.
+      # @return [Stage]
       def open(path, missing_assets: :error)
         expanded = File.expand_path(path)
         resolver = AssetResolver.new(missing_assets: missing_assets)
         new(Layer.open(expanded), resolver: resolver)
       end
 
+      # Create an empty file-backed stage.
+      # @return [Stage]
       def create(identifier)
         new(Layer.create(identifier))
       end
 
+      # Create an anonymous in-memory stage.
+      # @return [Stage]
       def create_in_memory
         new(Layer.create("anonymous:#{object_id}:#{Process.clock_gettime(Process::CLOCK_MONOTONIC)}"))
       end
@@ -37,6 +43,8 @@ module OpenUSD
       @edit_target = layer
     end
 
+    # Find an active composed prim.
+    # @return [Prim, PseudoRoot, nil]
     def prim_at(path)
       parsed = Path.parse(path)
       return pseudo_root if parsed.to_s == "/"
@@ -47,11 +55,14 @@ module OpenUSD
       prim.active? ? prim : nil
     end
 
+    # @return [Prim, nil] composed default prim
     def default_prim
       name = root_layer.metadata["defaultPrim"]
       prim_at("/#{name}") if name
     end
 
+    # Define a prim and any missing ancestors in the edit target.
+    # @return [Prim]
     def define_prim(path, type_name = nil)
       parsed = validate_prim_path(path)
       spec = ensure_spec(edit_target, parsed)
@@ -61,6 +72,8 @@ module OpenUSD
       Prim.new(self, parsed)
     end
 
+    # Remove or deactivate a prim in the edit target.
+    # @return [Stage]
     def remove_prim(path)
       parsed = validate_prim_path(path)
       remove_spec(edit_target, parsed)
@@ -74,6 +87,8 @@ module OpenUSD
       self
     end
 
+    # Traverse active prims depth-first.
+    # @return [Enumerator, Stage]
     def traverse
       return enum_for(__method__) unless block_given?
 
@@ -85,16 +100,22 @@ module OpenUSD
       self
     end
 
+    # Save the root layer to its identifier.
+    # @return [Stage]
     def save
       root_layer.save
       self
     end
 
+    # Export the root layer by destination extension.
+    # @return [Stage]
     def export(path)
       root_layer.export(path)
       self
     end
 
+    # Author a variant choice for a prim.
+    # @return [Stage]
     def set_variant_selection(path, set_name, choice)
       prim = prim_at(path)
       raise CompositionError, "prim not found: #{path}" unless prim
@@ -110,10 +131,14 @@ module OpenUSD
       self
     end
 
+    # @api private
+    # @return [Array<PrimSpec>] strongest-to-weakest opinions
     def opinions_for(path)
       composed_index.fetch(Path.parse(path).to_s, [])
     end
 
+    # @api private
+    # @return [Array<Path>] direct composed child paths
     def child_paths(path)
       prefix = "#{Path.parse(path)}/"
       paths = composed_index.keys.select do |candidate|
@@ -122,10 +147,14 @@ module OpenUSD
       paths.sort.map { |candidate| Path.parse(candidate) }
     end
 
+    # @api private
+    # @return [Array<Path>] composed root paths
     def root_paths
       composed_index.keys.select { |path| path.count("/") == 1 }.sort.map { |path| Path.parse(path) }
     end
 
+    # Find or author an attribute spec in the edit target.
+    # @api private
     def author_attribute(path, name, type_name)
       spec = ensure_spec(edit_target, Path.parse(path))
       property = spec.property_named(name)
@@ -136,6 +165,8 @@ module OpenUSD
       property
     end
 
+    # Find or author a relationship spec in the edit target.
+    # @api private
     def author_relationship(path, name)
       spec = ensure_spec(edit_target, Path.parse(path))
       property = spec.property_named(name)
@@ -145,6 +176,8 @@ module OpenUSD
       property
     end
 
+    # Author a prim type in the edit target.
+    # @api private
     def set_prim_type(path, type_name)
       spec = ensure_spec(edit_target, Path.parse(path))
       spec.type_name = type_name&.to_s
@@ -152,17 +185,22 @@ module OpenUSD
       type_name
     end
 
+    # Apply one metadata mutation to an edit-target prim spec.
+    # @api private
     def author_prim_metadata(path, operation, key, value)
       metadata = ensure_spec(edit_target, Path.parse(path)).metadata
       operation == :set ? metadata[key] = value : metadata.delete(key)
       invalidate!
     end
 
+    # @return [Array<Layer>] layers participating in composition
     def layer_stack
       composed_index
       @composition.layers
     end
 
+    # @api private
+    # Invalidate the cached composition index after an edit.
     def invalidate!
       @index = nil
       @composition = nil

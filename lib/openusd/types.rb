@@ -3,13 +3,16 @@
 module OpenUSD
   # Registry and validation for built-in USD value types.
   module Types
+    # Integer ranges enforced when authoring.
     INTEGER_RANGES = {
       "int" => (-(2**31)...(2**31)),
       "uint" => (0...(2**32)),
       "int64" => (-(2**63)...(2**63)),
       "uint64" => (0...(2**64))
     }.freeze
+    # Floating-point scalar type names.
     FLOAT_TYPES = %w[half float double].freeze
+    # Vector and quaternion type names mapped to component counts.
     VECTOR_TYPES = {
       "float2" => 2, "float3" => 3, "float4" => 4,
       "double2" => 2, "double3" => 3, "double4" => 4,
@@ -19,8 +22,11 @@ module OpenUSD
       "color4f" => 4, "texCoord2f" => 2, "texCoord3f" => 3,
       "quatf" => 4, "quatd" => 4, "quath" => 4
     }.freeze
+    # Matrix type names mapped to dimensions.
     MATRIX_TYPES = { "matrix2d" => 2, "matrix3d" => 3, "matrix4d" => 4 }.freeze
+    # Built-in scalar type names.
     SCALAR_TYPES = %w[bool int uint int64 uint64 half float double string token asset].freeze
+    # Internal dispatch table for scalar normalization.
     SIMPLE_COERCERS = {
       "bool" => :coerce_bool,
       "half" => :coerce_float,

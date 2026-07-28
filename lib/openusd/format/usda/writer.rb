@@ -5,15 +5,20 @@ module OpenUSD
     module Usda
       # Deterministic USDA serializer.
       class Writer
+        # Indentation used for nested USDA constructs.
         INDENT = " " * 4
 
         class << self
+          # Serialize a layer to a filesystem path.
+          # @return [String] destination path
           def write(layer, path)
             File.binwrite(path, new.write_to_string(layer))
             path
           end
         end
 
+        # Serialize a layer to USDA text.
+        # @return [String]
         def write_to_string(layer)
           @lines = ["#usda 1.0"]
           write_metadata_block(layer.metadata, 0) unless layer.metadata.empty?

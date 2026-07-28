@@ -5,11 +5,16 @@ module OpenUSD
     module Usda
       # Recursive-descent parser for USDA layers.
       class Parser
+        # Authored prim specifier keywords.
         SPECIFIERS = %w[def over class].freeze
+        # Recognized list-edit operation keywords.
         LIST_OPERATIONS = %w[prepend append delete reorder add explicit].freeze
+        # Recognized property qualifiers.
         QUALIFIERS = %w[custom uniform varying].freeze
 
         class << self
+          # Parse a USDA string.
+          # @return [Layer]
           def parse(source, file: nil)
             new(source, file: file).parse
           end
@@ -23,6 +28,8 @@ module OpenUSD
           advance
         end
 
+        # Parse the configured source.
+        # @return [Layer]
         def parse
           header = expect(:magic, description: "USDA header")
           error!("unsupported USDA version #{header.value}") unless header.value == "1.0"
@@ -310,6 +317,8 @@ module OpenUSD
       module Reader
         module_function
 
+        # Read a USDA layer from a filesystem path.
+        # @return [Layer]
         def read(path)
           Parser.parse(File.binread(path).force_encoding(Encoding::UTF_8), file: path)
         rescue Errno::ENOENT

@@ -6,6 +6,8 @@ module OpenUSD
     class Material < Base
       schema_type "Material"
 
+      # Bind this material to another prim.
+      # @return [Material]
       def bind(geometry_prim)
         geometry_prim.create_relationship("material:binding").set_targets([path])
         self

@@ -8,20 +8,29 @@ module OpenUSD
     module Usdz
       # Writes uncompressed, 64-byte-aligned USDZ packages.
       module Writer
+        # ZIP local-file-header signature.
         LOCAL_SIGNATURE = 0x04034B50
+        # ZIP central-directory-entry signature.
         CENTRAL_SIGNATURE = 0x02014B50
+        # ZIP end-of-central-directory signature.
         END_SIGNATURE = 0x06054B50
+        # OpenUSD alignment extra-field identifier.
         ALIGNMENT_EXTRA_ID = 0x1986
+        # Largest value representable by non-ZIP64 records.
         UINT32_MAX = (2**32) - 1
 
         module_function
 
+        # Package one in-memory layer as a USDZ file.
+        # @return [String] destination path
         def write(layer, path)
           root_name = "#{File.basename(path, File.extname(path))}.usda"
           write_entries(path, [[root_name, layer.to_usda]])
           path
         end
 
+        # Package a root USD file and additional assets.
+        # @return [String] destination path
         def pack(path, root:, assets: [])
           root_path = File.expand_path(root)
           validate_root!(root_path)
@@ -33,6 +42,8 @@ module OpenUSD
           raise PackageError, "package input not found: #{e.message}"
         end
 
+        # Write preloaded `[name, bytes]` entries.
+        # @return [Integer] bytes written
         def write_entries(path, entries)
           validate_entries!(entries)
           archive = String.new(encoding: Encoding::BINARY)

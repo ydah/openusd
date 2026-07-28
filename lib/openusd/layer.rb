@@ -6,10 +6,14 @@ module OpenUSD
     attr_reader :identifier, :root_prims, :metadata
 
     class << self
+      # Create an empty layer.
+      # @return [Layer]
       def create(identifier)
         new(identifier)
       end
 
+      # Open a USDA, USD, or USDZ layer.
+      # @return [Layer]
       def open(path)
         if path.to_s.match?(/\.usdz\[[^\]]+\]\z/i)
           require_relative "format/usdz/reader"
@@ -43,12 +47,15 @@ module OpenUSD
       prim
     end
 
+    # Remove and return a root prim by name.
+    # @return [PrimSpec, nil]
     def remove_root_prim(name)
       prim = root_prim_named(name)
       root_prims.delete(prim)
       prim
     end
 
+    # @return [PrimSpec, nil] root prim with the requested name
     def root_prim_named(name)
       root_prims.find { |prim| prim.name == name.to_s }
     end
@@ -63,6 +70,8 @@ module OpenUSD
       names.drop(1).reduce(root_prim_named(names.first)) { |prim, name| prim&.child_named(name) }
     end
 
+    # Traverse authored specs depth-first.
+    # @return [Enumerator, Layer]
     def each_prim(&block)
       return enum_for(__method__) unless block
 
@@ -72,12 +81,14 @@ module OpenUSD
       end
     end
 
+    # @return [Array<String>] authored sublayer asset paths
     def sub_layer_paths
       value = metadata["subLayers"]
       value = value.value if value.is_a?(ListOp)
       Array(value).map { |path| path.is_a?(AssetPath) ? path.path : path.to_s }
     end
 
+    # @return [PrimSpec, nil] authored default prim
     def default_prim
       name = metadata["defaultPrim"]
       name = name.to_s if name
@@ -90,16 +101,20 @@ module OpenUSD
       export(identifier)
     end
 
+    # Export using the format selected by the destination extension.
+    # @return [Layer]
     def export(path)
       Format::Registry.writer_for(path).write(self, path)
       self
     end
 
+    # @return [String] deterministic USDA representation
     def to_usda
       require_relative "format/usda/writer"
       Format::Usda::Writer.new.write_to_string(self)
     end
 
+    # Compare authored semantic content, ignoring identifiers.
     def ==(other)
       other.is_a?(self.class) && metadata == other.metadata &&
         root_prims.map(&:to_h) == other.root_prims.map(&:to_h)

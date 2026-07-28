@@ -4,11 +4,15 @@ require "strscan"
 
 module OpenUSD
   module Format
+    # USDA text format support.
     module Usda
       # Converts USDA text into location-aware tokens.
       class Lexer
+        # One lexeme and its source location.
         Token = Data.define(:type, :value, :line, :column, :raw)
+        # Single-character grammar symbols.
         SYMBOLS = "(){}[]=,:."
+        # Supported string escape translations.
         ESCAPES = {
           "n" => "\n", "r" => "\r", "t" => "\t", "b" => "\b",
           "f" => "\f", "\\" => "\\", "\"" => "\""
@@ -23,6 +27,7 @@ module OpenUSD
           @column = 1
         end
 
+        # Iterate through all tokens, including the final EOF token.
         def each_token
           return enum_for(__method__) unless block_given?
 
@@ -33,6 +38,7 @@ module OpenUSD
           end
         end
 
+        # @return [Token] next token from the source
         def next_token
           skip_ignored
           return token(:eof, nil, "") if @scanner.eos?

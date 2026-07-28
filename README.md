@@ -1,39 +1,154 @@
-# Openusd
+# openusd
 
-TODO: Delete this and the text below, and describe your gem
+`openusd` is a Pure Ruby library for reading, composing, editing, and writing
+OpenUSD ASCII (`.usda`) and package (`.usdz`) assets. It requires Ruby 3.2 or
+newer and has no runtime gem or native-library dependencies.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/openusd`. To experiment with that code, run `bin/console` for an interactive prompt.
+Version 1.0 focuses on pipeline automation, validation, conversion, and scene
+generation. It supports sublayers and references, but it is not a replacement
+for the complete C++ OpenUSD composition engine.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
-Install the gem and add to the application's Gemfile by executing:
+Add the gem to your bundle:
 
 ```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+bundle add openusd
 ```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+Or install it directly:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+gem install openusd
 ```
 
-## Usage
+## Create and save a stage
 
-TODO: Write usage instructions here
+```ruby
+require "openusd"
+
+stage = OpenUSD::Stage.create("scene.usda")
+stage.define_prim("/World", "Xform")
+cube = stage.define_prim("/World/Cube", "Cube")
+cube.create_attribute("size", "double").set(2.0)
+cube.create_attribute("xformOp:translate", "double3").set([0, 1, 0])
+cube.create_relationship("target").set_targets(["/World"])
+
+stage.root_layer.metadata.merge!(
+  "defaultPrim" => "World",
+  "metersPerUnit" => 1.0,
+  "upAxis" => "Y"
+)
+stage.save
+```
+
+## Open and traverse a composed stage
+
+```ruby
+stage = OpenUSD::Stage.open("scene.usda")
+
+stage.traverse do |prim|
+  puts "#{prim.path} <#{prim.type_name}>"
+end
+
+size = stage.prim_at("/World/Cube").attribute("size").get
+```
+
+`Stage.open(path, missing_assets: :warn)` warns and skips unresolved sublayers
+or references. The default policy, `:error`, raises
+`OpenUSD::CompositionError`; `:ignore` silently skips them.
+
+## Time samples and metadata
+
+```ruby
+prim = stage.prim_at("/World/Cube")
+attribute = prim.create_attribute("animatedSize", "double")
+attribute.set(1.0, time: 0)
+attribute.set(3.0, time: 24)
+
+attribute.get(time: 12) # => 2.0
+prim.metadata["kind"] = "component"
+attribute.metadata["documentation"] = "Animated cube size"
+```
+
+## Schema helpers
+
+```ruby
+xform = OpenUSD::Schema::Xform.define(stage, "/World/Model")
+xform.translate = [0, 2, 0]
+xform.scale = [2, 2, 2]
+
+mesh = OpenUSD::Schema::Mesh.define(stage, "/World/Model/Mesh")
+mesh.points = [[0, 0, 0], [1, 0, 0], [0, 1, 0]]
+mesh.face_vertex_counts = [3]
+mesh.face_vertex_indices = [0, 1, 2]
+```
+
+## USDZ
+
+Package an existing root layer and its assets:
+
+```ruby
+OpenUSD::Format::Usdz::Writer.pack(
+  "scene.usdz",
+  root: "scene.usda",
+  assets: ["textures/albedo.png"]
+)
+```
+
+Every entry is stored without compression and begins at a 64-byte boundary.
+The reader validates bounds, CRC values, alignment, encryption/compression
+flags, and extraction paths.
+
+```ruby
+stage = OpenUSD::Stage.open("scene.usdz")
+OpenUSD::Format::Usdz::Reader.unpack("scene.usdz", destination: "unpacked")
+```
+
+## Command line
+
+```text
+openusd cat scene.usda
+openusd cat --output formatted.usda scene.usda
+openusd tree scene.usdz
+openusd zip scene.usdz scene.usda textures/albedo.png
+```
+
+## Supported scope
+
+Version 1.0 supports:
+
+- USDA layer metadata, prims, typed attributes, relationships, time samples,
+  dictionaries, connections, references, and variant selections
+- deterministic USDA output and semantic round trips
+- root layer → authored sublayers → references composition strength
+- stored ZIP32 USDZ packages with internal USDA references
+- Xform, Mesh, Camera, Material, and Scope conveniences
+
+Version 1.0 does not support USDC (Crate), payloads, inherits, specializes, full
+list-edit semantics, Hydra/imaging, or concurrent writes to one Stage. Separate
+stages and concurrent read-only access are safe as long as application code
+does not mutate their underlying Layers.
+
+Unknown USDA value types and metadata are retained where the parser can
+represent their syntax, which allows newer authored data to survive a
+parse/write round trip.
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```bash
+bundle install
+bundle exec rake spec
+bundle exec rake lint
+bundle exec rake doc
+bundle exec rake compatibility # requires usdchecker on PATH
+bundle exec rake bench
+```
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/openusd.
+The compatibility task validates generated USDA and USDZ files with the
+official `usdchecker`. The benchmark defaults to 100,000 generated prims; set
+`PRIMS` to choose another size.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available under the [MIT License](LICENSE.txt).

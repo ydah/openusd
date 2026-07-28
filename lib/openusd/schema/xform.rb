@@ -6,26 +6,32 @@ module OpenUSD
     class Xform < Base
       schema_type "Xform"
 
+      # @return [Array<Float>, nil] translation operation
       def translate
         get("xformOp:translate")
       end
 
+      # Author the translation operation.
       def translate=(value)
         set_operation("xformOp:translate", "double3", value)
       end
 
+      # @return [Array<Float>, nil] XYZ rotation operation
       def rotate_xyz
         get("xformOp:rotateXYZ")
       end
 
+      # Author the XYZ rotation operation.
       def rotate_xyz=(value)
         set_operation("xformOp:rotateXYZ", "float3", value)
       end
 
+      # @return [Array<Float>, nil] scale operation
       def scale
         get("xformOp:scale")
       end
 
+      # Author the scale operation.
       def scale=(value)
         set_operation("xformOp:scale", "float3", value)
       end

@@ -10,10 +10,14 @@ module OpenUSD
       @name = name.to_s
     end
 
+    # @return [String, nil] strongest authored USD type name
     def type_name
       opinions.first&.type_name
     end
 
+    # Get the default or a time-sampled value.
+    # @param time [Numeric, nil]
+    # @return [Object, nil]
     def get(time: nil)
       return default_value if time.nil?
 
@@ -22,20 +26,25 @@ module OpenUSD
       raise OpenUSD::TypeError, "time must be numeric"
     end
 
+    # Author a default or time-sampled value in the edit target.
+    # @return [Object] input value
     def set(value, time: nil)
       authored_spec.set(value, time: time)
       prim.stage.invalidate!
       value
     end
 
+    # @return [Hash{Float => Object}] composed samples in time order
     def time_samples
       opinions.reverse_each.with_object({}) { |opinion, result| result.merge!(opinion.time_samples) }.sort.to_h
     end
 
+    # @return [Array<Path>] strongest authored connections
     def connections
       opinions.find { |opinion| opinion.connections.any? }&.connections || []
     end
 
+    # @return [MetadataView] composed, writable metadata
     def metadata
       values = opinions.reverse_each.with_object({}) { |opinion, result| result.merge!(opinion.metadata) }
       MetadataView.new(values, writer: method(:write_metadata))

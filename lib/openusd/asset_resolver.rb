@@ -5,6 +5,7 @@ require "pathname"
 module OpenUSD
   # Resolves authored asset paths relative to their containing layer.
   class AssetResolver
+    # Supported unresolved-asset behaviors.
     MISSING_POLICIES = %i[error warn ignore].freeze
 
     attr_reader :search_paths, :missing_assets

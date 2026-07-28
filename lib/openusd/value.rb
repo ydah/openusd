@@ -24,10 +24,12 @@ module OpenUSD
     end
     alias == eql?
 
+    # @return [Integer] value hash
     def hash
       [path, resolved_path].hash
     end
 
+    # @return [String] authored, unresolved asset path
     def to_s
       path
     end
@@ -43,6 +45,7 @@ module OpenUSD
       freeze
     end
 
+    # Compare the list operation and value.
     def ==(other)
       other.is_a?(self.class) && operation == other.operation && value == other.value
     end
@@ -58,6 +61,7 @@ module OpenUSD
       freeze
     end
 
+    # Compare asset and target paths.
     def ==(other)
       other.is_a?(self.class) && asset_path == other.asset_path && prim_path == other.prim_path
     end

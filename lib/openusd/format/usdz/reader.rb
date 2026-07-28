@@ -5,16 +5,24 @@ require "zlib"
 
 module OpenUSD
   module Format
+    # USDZ package format support.
     module Usdz
       # Reads and validates the constrained ZIP representation used by USDZ.
       class Reader
+        # Validated package entry.
         Entry = Data.define(:name, :data, :data_offset)
+        # Virtual identifier for an entry inside a package.
         PACKAGE_URI = /\A(.+\.usdz)\[([^\]]+)\]\z/i
+        # ZIP local-file-header signature.
         LOCAL_SIGNATURE = 0x04034B50
+        # ZIP central-directory-entry signature.
         CENTRAL_SIGNATURE = 0x02014B50
+        # ZIP end-of-central-directory signature.
         END_SIGNATURE = 0x06054B50
 
         class << self
+          # Read the default layer from a package.
+          # @return [Layer]
           def read(path)
             package = new(path)
             root = package.entries.first
@@ -23,6 +31,8 @@ module OpenUSD
             parse_layer(package.path, root)
           end
 
+          # Read a layer identified by a virtual package URI.
+          # @return [Layer]
           def read_uri(uri)
             package_path, entry_name = parse_uri(uri)
             package = new(package_path)
@@ -32,6 +42,8 @@ module OpenUSD
             parse_layer(package.path, entry)
           end
 
+          # Split a virtual package URI.
+          # @return [Array(String, String)] package path and entry name
           def parse_uri(uri)
             match = PACKAGE_URI.match(uri.to_s)
             raise PackageError, "invalid package URI: #{uri}" unless match
@@ -39,6 +51,8 @@ module OpenUSD
             [File.expand_path(match[1]), match[2]]
           end
 
+          # Parse a validated package entry as USDA.
+          # @return [Layer]
           def parse_layer(package_path, root)
             extension = File.extname(root.name).downcase
             raise NotSupportedError, "USDC root layers are not supported" if extension == ".usdc"
@@ -50,6 +64,8 @@ module OpenUSD
             layer
           end
 
+          # Extract a validated package.
+          # @return [Array<String>] extracted entry names
           def unpack(path, destination:)
             new(path).extract(destination)
           end
@@ -65,14 +81,19 @@ module OpenUSD
           raise PackageError, "package not found: #{path}"
         end
 
+        # @return [Array<Entry>] validated entries in archive order
         def entries
           @entries ||= parse_entries.freeze
         end
 
+        # Find an entry by its exact package path.
+        # @return [Entry, nil]
         def entry(name)
           entries.find { |candidate| candidate.name == name.to_s }
         end
 
+        # Securely extract all entries below a destination.
+        # @return [Array<String>] extracted entry names
         def extract(destination)
           root = File.expand_path(destination)
           entries.each do |entry|

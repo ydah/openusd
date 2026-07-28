@@ -3,6 +3,7 @@
 module OpenUSD
   # An authored prim specification in a Layer.
   class PrimSpec
+    # Valid authored specifier values.
     SPECIFIERS = %i[def over class].freeze
 
     attr_reader :name, :children, :properties, :metadata, :references, :variant_sets, :specifier
@@ -43,6 +44,8 @@ module OpenUSD
       child
     end
 
+    # Remove a direct child by name.
+    # @return [PrimSpec, nil]
     def remove_child(name)
       child = child_named(name)
       return unless child
@@ -52,6 +55,7 @@ module OpenUSD
       child
     end
 
+    # @return [PrimSpec, nil] direct child by name
     def child_named(name)
       children.find { |child| child.name == name.to_s }
     end
@@ -65,22 +69,29 @@ module OpenUSD
       property
     end
 
+    # @return [AttributeSpec, RelationshipSpec, nil] authored property by name
     def property_named(name)
       properties.find { |property| property.name == name.to_s }
     end
 
+    # Remove an authored property by name.
+    # @return [AttributeSpec, RelationshipSpec, nil]
     def remove_property(name)
       property = property_named(name)
       properties.delete(property)
       property
     end
 
+    # Add a reference composition arc.
+    # @return [Reference]
     def add_reference(asset_path, prim_path = nil)
       reference = Reference.new(asset_path, prim_path)
       references << reference
       reference
     end
 
+    # Traverse authored descendants depth-first.
+    # @return [Enumerator, nil]
     def each_descendant(&block)
       return enum_for(__method__) unless block
 
@@ -90,6 +101,7 @@ module OpenUSD
       end
     end
 
+    # @return [Hash] semantic representation used for equality
     def to_h
       {
         name: name, type_name: type_name, specifier: specifier,

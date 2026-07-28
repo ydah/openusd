@@ -3,7 +3,9 @@
 module OpenUSD
   # An authored attribute in a Layer.
   class AttributeSpec
+    # Sentinel distinguishing an absent default from an authored value block.
     UNAUTHORED = Object.new.freeze
+    # Valid attribute variability values.
     VARIABILITIES = %i[varying uniform].freeze
 
     attr_reader :name, :type_name, :time_samples, :connections, :metadata, :variability, :default
@@ -71,6 +73,7 @@ module OpenUSD
       @connections = Array(paths).map { |path| Path.parse(path) }
     end
 
+    # @return [Hash] semantic representation used for equality
     def to_h
       {
         name: name, type_name: type_name, default: default,

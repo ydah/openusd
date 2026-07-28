@@ -9,12 +9,14 @@ module OpenUSD
       @writer = writer
     end
 
+    # Author a metadata value through the owning view.
     def []=(key, value)
       normalized = key.to_s
       @writer.call(:set, normalized, value)
       store(normalized, value)
     end
 
+    # Delete an authored metadata value.
     def delete(key)
       normalized = key.to_s
       @writer.call(:delete, normalized, nil)
