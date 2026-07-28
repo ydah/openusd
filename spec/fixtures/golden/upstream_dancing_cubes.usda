@@ -1,0 +1,42 @@
+#usda 1.0
+(
+    endTimeCode = 200
+    startTimeCode = 0
+)
+
+def "Root"
+(
+    payload = @anon:dummy:cubes.usddancingcubesexample@
+    references = </Params>
+)
+{
+}
+
+def "Params"
+(
+    Usd_DCE_Params = {
+        int perSide = 15
+        int framesPerCycle = 36
+        int numFrames = 200
+        double distance = 6.0
+        double moveScale = 1.5
+    }
+    variants = {
+        string geomTypeVariant = "cube"
+    }
+    prepend variantSets = "geomTypeVariant"
+)
+{
+
+    variantSet "geomTypeVariant" = {
+        "cube" {
+            token geomType = "Cube"
+        }
+        "sphere" {
+            token geomType = "Sphere"
+        }
+        "cone" {
+            token geomType = "Cone"
+        }
+    }
+}

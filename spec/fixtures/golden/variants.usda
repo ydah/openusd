@@ -1,0 +1,20 @@
+#usda 1.0
+
+def Xform "Model"
+(
+    variants = {
+        string color = "red"
+    }
+    prepend variantSets = "color"
+)
+{
+
+    variantSet "color" = {
+        "red" {
+            color3f displayColor = (1.0, 0.0, 0.0)
+        }
+        "blue" {
+            color3f displayColor = (0.0, 0.0, 1.0)
+        }
+    }
+}

@@ -15,6 +15,15 @@ RSpec.describe OpenUSD::Format::Usda::Writer do
     end
   end
 
+  it "matches deterministic golden output for every fixture" do
+    fixture_paths.each do |path|
+      relative = path.delete_prefix("#{fixture_dir}/").tr("/", "__")
+      expected = File.binread(File.join(fixture_dir, "golden", relative))
+
+      expect(OpenUSD::Layer.open(path).to_usda).to eq(expected), "golden output changed for #{relative}"
+    end
+  end
+
   it "produces deterministic, escaped USDA" do
     layer = OpenUSD::Layer.create("scene.usda")
     layer.metadata["defaultPrim"] = "World"
@@ -34,6 +43,15 @@ RSpec.describe OpenUSD::Format::Usda::Writer do
       }
     USDA
     expect(described_class.new.write_to_string(layer)).to eq(expected)
+  end
+
+  it "keeps property metadata opening delimiters on the declaration line" do
+    attribute = OpenUSD::AttributeSpec.new("width", "float", metadata: { "interpolation" => "vertex" })
+    prim = OpenUSD::PrimSpec.new("Curve", type_name: "BasisCurves")
+    prim.add_property(attribute)
+    layer = OpenUSD::Layer.new(nil, root_prims: [prim])
+
+    expect(layer.to_usda).to include("float width (\n        interpolation = \"vertex\"")
   end
 
   it "exports and reopens a layer" do

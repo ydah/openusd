@@ -119,24 +119,29 @@ module OpenUSD
           if metadata.empty?
             append(text, depth)
           else
-            append(text, depth)
-            write_metadata_block(metadata, depth)
+            append("#{text} (", depth)
+            write_metadata_entries(metadata, depth + 1)
+            append(")", depth)
           end
         end
 
         def write_metadata_block(metadata, depth, layer_comment: false)
           append("(", depth)
+          write_metadata_entries(metadata, depth + 1, layer_comment: layer_comment)
+          append(")", depth)
+        end
+
+        def write_metadata_entries(metadata, depth, layer_comment: false)
           metadata.each do |key, value|
             if layer_comment && key == "comment" && value.is_a?(String)
-              append(quote(value), depth + 1)
+              append(quote(value), depth)
               next
             end
 
             operation, unwrapped = unwrap_list_op(value)
             prefix = operation ? "#{operation} " : ""
-            write_metadata_entry("#{prefix}#{key}", unwrapped, depth + 1)
+            write_metadata_entry("#{prefix}#{key}", unwrapped, depth)
           end
-          append(")", depth)
         end
 
         def write_metadata_entry(key, value, depth)
