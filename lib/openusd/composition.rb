@@ -14,11 +14,13 @@ module OpenUSD
       end
     end
 
-    attr_reader :root_layer, :resolver, :layers
+    attr_reader :root_layer, :resolver, :layers, :layer_cache
 
-    def initialize(root_layer, resolver:)
+    def initialize(root_layer, resolver:, layer_cache: {})
       @root_layer = root_layer
       @resolver = resolver
+      @layer_cache = layer_cache
+      @layer_cache[layer_key(root_layer)] = root_layer
       @layers = []
     end
 
@@ -49,7 +51,7 @@ module OpenUSD
 
         key = File.expand_path(resolved)
         cycle!(stack, key) if stack.include?(key)
-        child = Layer.open(resolved)
+        child = load_layer(resolved)
         result.concat(collect_layer_stack(child, stack + [key]))
       end
       result
@@ -106,7 +108,7 @@ module OpenUSD
       resolved = resolver.resolve(reference.asset_path, anchor: layer_identifier(owner))
       return unless resolved
 
-      referenced_layer = Layer.open(resolved)
+      referenced_layer = load_layer(resolved)
       source_index = compose_layer(referenced_layer, stack)
       source_root = reference.prim_path || referenced_layer.default_prim&.path
       raise CompositionError, "reference #{resolved} has no target or defaultPrim" unless source_root
@@ -122,6 +124,11 @@ module OpenUSD
 
     def layer_identifier(owner)
       layers.find { |layer| layer.prim_at(owner.path) == owner }&.identifier || root_layer.identifier
+    end
+
+    def load_layer(identifier)
+      key = identifier.match?(/\.usdz\[[^\]]+\]\z/i) ? identifier : File.expand_path(identifier)
+      layer_cache[key] ||= Layer.open(identifier)
     end
 
     def layer_key(layer)

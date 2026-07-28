@@ -34,6 +34,7 @@ module OpenUSD
       @pseudo_root = PseudoRoot.new(self)
       @composition = nil
       @index = nil
+      @layer_cache = {}
     end
 
     def edit_target=(layer)
@@ -212,7 +213,7 @@ module OpenUSD
     def composed_index
       return @index if @index
 
-      @composition = Composition.new(root_layer, resolver: resolver)
+      @composition = Composition.new(root_layer, resolver: resolver, layer_cache: @layer_cache)
       @index = @composition.build
     end
 

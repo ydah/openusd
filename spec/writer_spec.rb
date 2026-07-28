@@ -45,4 +45,22 @@ RSpec.describe OpenUSD::Format::Usda::Writer do
       expect(OpenUSD::Layer.open(destination)).to eq(layer)
     end
   end
+
+  it "round-trips matrices and non-finite numbers" do
+    source = <<~USDA
+      #usda 1.0
+      def Xform "World" {
+          matrix2d transform = ((1, 0), (0, 1))
+          double negativeInfinity = -inf
+          double notANumber = nan
+      }
+    USDA
+    layer = OpenUSD::Format::Usda::Parser.parse(source)
+    output = layer.to_usda
+    reparsed = OpenUSD::Format::Usda::Parser.parse(output)
+
+    expect(reparsed.prim_at("/World").property_named("transform").default).to eq([[1.0, 0.0], [0.0, 1.0]])
+    expect(reparsed.prim_at("/World").property_named("negativeInfinity").default).to eq(-Float::INFINITY)
+    expect(reparsed.prim_at("/World").property_named("notANumber").default).to be_nan
+  end
 end

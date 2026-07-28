@@ -81,9 +81,9 @@ module OpenUSD
                                 attribute.metadata, depth)
             wrote_value = true
           end
-          write_time_samples(attribute, prefix, depth) unless attribute.time_samples.empty?
-          write_connections(attribute, prefix, depth) unless attribute.connections.empty?
-          authored = wrote_value || attribute.time_samples.any? || attribute.connections.any?
+          write_time_samples(attribute, prefix, depth) if attribute.time_samples_authored?
+          write_connections(attribute, prefix, depth) if attribute.connections_authored?
+          authored = wrote_value || attribute.time_samples_authored? || attribute.connections_authored?
           write_property_line(prefix, attribute.metadata, depth) unless authored
         end
 
@@ -104,7 +104,11 @@ module OpenUSD
         def write_relationship(relationship, depth)
           prefix = relationship.custom ? "custom rel #{relationship.name}" : "rel #{relationship.name}"
           value = relationship.targets.length == 1 ? relationship.targets.first : relationship.targets
-          text = relationship.targets.empty? ? prefix : "#{prefix} = #{format_value(value, nil, depth)}"
+          text = if relationship.targets_authored?
+                   "#{prefix} = #{format_value(value, nil, depth)}"
+                 else
+                   prefix
+                 end
           write_property_line(text, relationship.metadata, depth)
         end
 
@@ -184,7 +188,11 @@ module OpenUSD
           matrix = scalar_value && Types::MATRIX_TYPES.key?(Types.base_type(expected_type))
           opening, closing = vector || matrix ? ["(", ")"] : ["[", "]"]
           element_type = Types.array?(expected_type.to_s) ? Types.base_type(expected_type) : nil
-          contents = values.map { |value| format_value(value, element_type, depth) }.join(", ")
+          contents = if matrix
+                       values.map { |row| format_array(row, "double4", depth) }.join(", ")
+                     else
+                       values.map { |value| format_value(value, element_type, depth) }.join(", ")
+                     end
           "#{opening}#{contents}#{closing}"
         end
 

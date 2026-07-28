@@ -110,9 +110,9 @@ module OpenUSD
         def parse_relationship(qualifiers)
           advance
           name = expect_identifier
-          value = accept_symbol?("=") ? parse_value : []
+          value = accept_symbol?("=") ? parse_value : RelationshipSpec::UNAUTHORED
           metadata = symbol?("(") ? parse_metadata_block : {}
-          targets = unwrap_list(value).compact
+          targets = value.equal?(RelationshipSpec::UNAUTHORED) ? value : unwrap_list(value).compact
           RelationshipSpec.new(name, targets: targets, custom: qualifiers.include?("custom"), metadata: metadata)
         end
 

@@ -36,12 +36,12 @@ module OpenUSD
 
     # @return [Hash{Float => Object}] composed samples in time order
     def time_samples
-      opinions.reverse_each.with_object({}) { |opinion, result| result.merge!(opinion.time_samples) }.sort.to_h
+      opinions.find(&:time_samples_authored?)&.time_samples || {}
     end
 
     # @return [Array<Path>] strongest authored connections
     def connections
-      opinions.find { |opinion| opinion.connections.any? }&.connections || []
+      opinions.find(&:connections_authored?)&.connections || []
     end
 
     # @return [MetadataView] composed, writable metadata
@@ -61,10 +61,11 @@ module OpenUSD
     end
 
     def sampled_value(time)
-      opinion = opinions.find { |candidate| candidate.time_samples.any? }
+      opinion = opinions.find(&:time_samples_authored?)
       return default_value unless opinion
 
       samples = opinion.time_samples
+      return default_value if samples.empty?
       return samples[time] if samples.key?(time)
 
       interpolate_samples(samples, time)

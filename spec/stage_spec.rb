@@ -39,6 +39,13 @@ RSpec.describe OpenUSD::Stage do
       weak = OpenUSD::Layer.create(File.join(directory, "weak.usda"))
       weak_prim = OpenUSD::PrimSpec.new("World", type_name: "Scope")
       weak_prim.add_property(OpenUSD::AttributeSpec.new("value", "int", default: 1))
+      connected = OpenUSD::AttributeSpec.new("connected", "float")
+      connected.connections = ["/Driver.output"]
+      weak_prim.add_property(connected)
+      sampled = OpenUSD::AttributeSpec.new("sampled", "float")
+      sampled.time_samples = { 0 => 1 }
+      weak_prim.add_property(sampled)
+      weak_prim.add_property(OpenUSD::RelationshipSpec.new("target", targets: ["/Target"]))
       weak.add_root_prim(weak_prim)
       weak.save
 
@@ -46,12 +53,22 @@ RSpec.describe OpenUSD::Stage do
       root.metadata["subLayers"] = [OpenUSD::AssetPath.new("weak.usda")]
       root_prim = OpenUSD::PrimSpec.new("World", type_name: "Xform", specifier: :over)
       root_prim.add_property(OpenUSD::AttributeSpec.new("value", "int", default: 2))
+      disconnected = OpenUSD::AttributeSpec.new("connected", "float")
+      disconnected.connections = []
+      root_prim.add_property(disconnected)
+      unsampled = OpenUSD::AttributeSpec.new("sampled", "float")
+      unsampled.time_samples = {}
+      root_prim.add_property(unsampled)
+      root_prim.add_property(OpenUSD::RelationshipSpec.new("target", targets: []))
       root.add_root_prim(root_prim)
       root.save
 
       stage = described_class.open(root.identifier)
       expect(stage.prim_at("/World").type_name).to eq("Xform")
       expect(stage.prim_at("/World").attribute("value").get).to eq(2)
+      expect(stage.prim_at("/World").attribute("connected").connections).to be_empty
+      expect(stage.prim_at("/World").attribute("sampled").time_samples).to be_empty
+      expect(stage.prim_at("/World").relationship("target").targets).to be_empty
       expect(stage.layer_stack.length).to eq(2)
     end
   end
@@ -98,5 +115,23 @@ RSpec.describe OpenUSD::Stage do
     expect { stage.edit_target = OpenUSD::Layer.create("other.usda") }.to raise_error(OpenUSD::CompositionError)
     expect { prim.create_relationship("value") }.to raise_error(OpenUSD::TypeError)
     expect { stage.define_prim("relative") }.to raise_error(OpenUSD::PathError)
+  end
+
+  it "preserves edits authored into a sublayer across recomposition" do
+    Dir.mktmpdir do |directory|
+      weak = OpenUSD::Layer.create(File.join(directory, "weak.usda"))
+      weak.add_root_prim(OpenUSD::PrimSpec.new("World", type_name: "Xform"))
+      weak.save
+      root = OpenUSD::Layer.create(File.join(directory, "root.usda"))
+      root.metadata["subLayers"] = [OpenUSD::AssetPath.new("weak.usda")]
+      root.save
+
+      stage = described_class.open(root.identifier)
+      stage.edit_target = stage.layer_stack.last
+      stage.define_prim("/World/FromEditTarget", "Scope")
+
+      expect(stage.prim_at("/World/FromEditTarget").type_name).to eq("Scope")
+      expect(stage.layer_stack.last).to equal(stage.edit_target)
+    end
   end
 end

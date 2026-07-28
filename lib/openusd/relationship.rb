@@ -12,7 +12,7 @@ module OpenUSD
 
     # @return [Array<Path>] strongest authored targets
     def targets
-      opinions.find { |opinion| opinion.targets.any? }&.targets || []
+      opinions.find(&:targets_authored?)&.targets || []
     end
 
     # Add one target in the edit target.

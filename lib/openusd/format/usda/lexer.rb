@@ -49,14 +49,20 @@ module OpenUSD
           return scan_quoted("@@@", :asset) if @scanner.peek(3) == "@@@"
           return scan_quoted("@", :asset) if @scanner.peek(1) == "@"
           return scan_path if @scanner.peek(1) == "<"
+
+          scan_bare_token
+        end
+
+        private
+
+        def scan_bare_token
+          return scan_special_number if @scanner.match?(/[+-]?(?:inf|nan)\b/)
           return scan_number if @scanner.match?(/[+-]?(?:\d|\.\d)/)
           return scan_identifier if @scanner.match?(/[\p{L}_]/u)
           return scan_symbol if SYMBOLS.include?(@scanner.peek(1))
 
           lexical_error!("unexpected character #{@scanner.peek(1).inspect}")
         end
-
-        private
 
         def skip_ignored
           loop do
@@ -153,6 +159,21 @@ module OpenUSD
           column = @column
           raw = @scanner.scan(/[+-]?(?:(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?)/)
           value = raw.match?(/[.eE]/) ? Float(raw) : Integer(raw, 10)
+          advance(raw)
+          Token.new(:number, value, line, column, raw.freeze)
+        end
+
+        def scan_special_number
+          line = @line
+          column = @column
+          raw = @scanner.scan(/[+-]?(?:inf|nan)\b/)
+          value = if raw.include?("nan")
+                    Float::NAN
+                  elsif raw.start_with?("-")
+                    -Float::INFINITY
+                  else
+                    Float::INFINITY
+                  end
           advance(raw)
           Token.new(:number, value, line, column, raw.freeze)
         end
