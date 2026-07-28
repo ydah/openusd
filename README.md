@@ -1,4 +1,4 @@
-# openusd
+# openusd [![Gem Version](https://badge.fury.io/rb/openusd.svg)](https://badge.fury.io/rb/openusd) [![Ruby](https://github.com/ydah/openusd/actions/workflows/main.yml/badge.svg)](https://github.com/ydah/openusd/actions/workflows/main.yml)
 
 `openusd` is a Pure Ruby library for reading, composing, editing, and writing
 OpenUSD ASCII (`.usda`) and package (`.usdz`) assets. It requires Ruby 3.2 or
