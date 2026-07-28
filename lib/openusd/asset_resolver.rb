@@ -21,6 +21,7 @@ module OpenUSD
     # @return [String, nil]
     def resolve(asset_path, anchor: nil)
       authored = asset_path.is_a?(AssetPath) ? asset_path.path : asset_path.to_s
+      return resolve_package_asset(authored, anchor) if package_uri?(anchor)
       return File.expand_path(anchor) if authored.empty? && anchor
 
       resolved = candidates(authored, anchor).find { |candidate| File.file?(candidate) }
@@ -30,6 +31,21 @@ module OpenUSD
     end
 
     private
+
+    def package_uri?(value)
+      value&.match?(/\A.+\.usdz\[[^\]]+\]\z/i)
+    end
+
+    def resolve_package_asset(authored, anchor)
+      package, entry_name = Format::Usdz::Reader.parse_uri(anchor)
+      normalized = File.expand_path(authored, "/#{File.dirname(entry_name)}").delete_prefix("/")
+      unsafe = normalized.start_with?("../") || authored.start_with?("/")
+      return missing(authored, anchor) if unsafe
+
+      return "#{package}[#{normalized}]" if Format::Usdz::Reader.new(package).entry(normalized)
+
+      missing(authored, anchor)
+    end
 
     def candidates(authored, anchor)
       return [File.expand_path(authored)] if Pathname.new(authored).absolute?

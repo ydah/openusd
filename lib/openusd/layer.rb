@@ -11,6 +11,11 @@ module OpenUSD
       end
 
       def open(path)
+        if path.to_s.match?(/\.usdz\[[^\]]+\]\z/i)
+          require_relative "format/usdz/reader"
+          return Format::Usdz::Reader.read_uri(path.to_s)
+        end
+
         expanded = File.expand_path(path)
         Format::Registry.reader_for(expanded).read(expanded)
       rescue Errno::ENOENT

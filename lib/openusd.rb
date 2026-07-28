@@ -20,6 +20,14 @@ require_relative "openusd/attribute"
 require_relative "openusd/relationship"
 require_relative "openusd/prim"
 require_relative "openusd/stage"
+require_relative "openusd/format/usdz/reader"
+require_relative "openusd/format/usdz/writer"
+require_relative "openusd/schema/base"
+require_relative "openusd/schema/xform"
+require_relative "openusd/schema/mesh"
+require_relative "openusd/schema/camera"
+require_relative "openusd/schema/material"
+require_relative "openusd/schema/scope"
 
 module OpenUSD
 end
