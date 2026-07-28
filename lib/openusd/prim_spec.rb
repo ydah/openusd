@@ -112,7 +112,7 @@ module OpenUSD
       {
         name: name, type_name: type_name, specifier: specifier,
         metadata: metadata, references: references, variant_sets: variant_sets_to_h,
-        properties: properties.map(&:to_h), children: children.map(&:to_h)
+        properties: semantic_properties(properties), children: children.map(&:to_h)
       }
     end
 
@@ -137,9 +137,13 @@ module OpenUSD
         choices.transform_values do |variant|
           next variant unless variant.respond_to?(:properties)
 
-          { properties: variant.properties.map(&:to_h), children: variant.children.map(&:to_h) }
+          { properties: semantic_properties(variant.properties), children: variant.children.map(&:to_h) }
         end
       end
+    end
+
+    def semantic_properties(values)
+      values.sort_by(&:name).map(&:to_h)
     end
   end
 end

@@ -1,0 +1,8 @@
+#usda 1.0
+# Modified by the openusd Ruby project only to normalize the final newline.
+(
+    defaultPrim = "Empty"
+)
+
+def "Empty"
+{}

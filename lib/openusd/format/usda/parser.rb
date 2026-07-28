@@ -35,7 +35,7 @@ module OpenUSD
           error!("unsupported USDA version #{header.value}") unless header.value == "1.0"
 
           layer = Layer.new(file)
-          layer.metadata.merge!(parse_metadata_block) if symbol?("(")
+          layer.metadata.merge!(parse_metadata_block(layer_comment: true)) if symbol?("(")
           layer.add_root_prim(parse_prim) until current.type == :eof
           layer
         rescue OpenUSD::PathError, OpenUSD::TypeError => e
@@ -73,7 +73,7 @@ module OpenUSD
             elsif identifier?("variantSet")
               parse_variant_set(prim)
             else
-              prim.add_property(parse_property)
+              PropertyMerger.merge(prim, parse_property)
             end
           end
         end
@@ -152,10 +152,18 @@ module OpenUSD
           end
         end
 
-        def parse_metadata_block
+        def parse_metadata_block(layer_comment: false)
           expect_symbol("(")
           metadata = {}
-          metadata.merge!(parse_metadata_entry) until accept_symbol?(")")
+          until accept_symbol?(")")
+            if layer_comment && current.type == :string
+              error!("duplicate layer comment") if metadata.key?("comment")
+
+              metadata["comment"] = consume.value
+            else
+              metadata.merge!(parse_metadata_entry)
+            end
+          end
           metadata
         end
 
@@ -273,17 +281,11 @@ module OpenUSD
           value.is_a?(Array) ? value : [value]
         end
 
-        def specifier?
-          current.type == :identifier && SPECIFIERS.include?(current.value)
-        end
+        def specifier? = current.type == :identifier && SPECIFIERS.include?(current.value)
 
-        def identifier?(value)
-          current.type == :identifier && current.value == value
-        end
+        def identifier?(value) = current.type == :identifier && current.value == value
 
-        def symbol?(value)
-          current.type == :symbol && current.value == value
-        end
+        def symbol?(value) = current.type == :symbol && current.value == value
 
         def accept_symbol?(value)
           return false unless symbol?(value)

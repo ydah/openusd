@@ -4,9 +4,10 @@ require "tmpdir"
 
 RSpec.describe OpenUSD::Format::Usda::Writer do
   let(:fixture_dir) { File.expand_path("fixtures", __dir__) }
+  let(:fixture_paths) { Dir[File.join(fixture_dir, "{,upstream/}*.usda")] }
 
-  it "round-trips every project fixture with semantic equality" do
-    Dir[File.join(fixture_dir, "*.usda")].each do |path|
+  it "round-trips every project and upstream fixture with semantic equality" do
+    fixture_paths.each do |path|
       original = OpenUSD::Layer.open(path)
       reparsed = OpenUSD::Format::Usda::Parser.parse(original.to_usda)
 

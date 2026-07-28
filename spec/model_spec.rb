@@ -36,6 +36,17 @@ RSpec.describe "OpenUSD core model" do
     expect(relationship.targets.map(&:to_s)).to eq(["/Material", "/Other"])
   end
 
+  it "compares property specs independently of serialization order" do
+    left = OpenUSD::PrimSpec.new("World")
+    right = OpenUSD::PrimSpec.new("World")
+    left.add_property(OpenUSD::AttributeSpec.new("varyingValue", "double"))
+    left.add_property(OpenUSD::AttributeSpec.new("uniformValue", "token", variability: :uniform))
+    right.add_property(OpenUSD::AttributeSpec.new("uniformValue", "token", variability: :uniform))
+    right.add_property(OpenUSD::AttributeSpec.new("varyingValue", "double"))
+
+    expect(left.to_h).to eq(right.to_h)
+  end
+
   it "stores references, metadata, variants, and sublayers" do
     world.add_reference("asset.usda", "/Root")
     world.variant_sets["look"] = { "red" => [] }

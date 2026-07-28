@@ -21,7 +21,7 @@ module OpenUSD
         # @return [String]
         def write_to_string(layer)
           @lines = ["#usda 1.0"]
-          write_metadata_block(layer.metadata, 0) unless layer.metadata.empty?
+          write_metadata_block(layer.metadata, 0, layer_comment: true) unless layer.metadata.empty?
           layer.root_prims.each do |prim|
             line
             write_prim(prim, 0)
@@ -75,15 +75,18 @@ module OpenUSD
 
         def write_attribute(attribute, depth)
           prefix = attribute_prefix(attribute)
-          wrote_value = false
+          wrote_declaration = false
           if attribute.default_authored?
             write_property_line("#{prefix} = #{format_value(attribute.default, attribute.type_name, depth)}",
                                 attribute.metadata, depth)
-            wrote_value = true
+            wrote_declaration = true
+          elsif !attribute.metadata.empty?
+            write_property_line(prefix, attribute.metadata, depth)
+            wrote_declaration = true
           end
           write_time_samples(attribute, prefix, depth) if attribute.time_samples_authored?
           write_connections(attribute, prefix, depth) if attribute.connections_authored?
-          authored = wrote_value || attribute.time_samples_authored? || attribute.connections_authored?
+          authored = wrote_declaration || attribute.time_samples_authored? || attribute.connections_authored?
           write_property_line(prefix, attribute.metadata, depth) unless authored
         end
 
@@ -121,9 +124,14 @@ module OpenUSD
           end
         end
 
-        def write_metadata_block(metadata, depth)
+        def write_metadata_block(metadata, depth, layer_comment: false)
           append("(", depth)
           metadata.each do |key, value|
+            if layer_comment && key == "comment" && value.is_a?(String)
+              append(quote(value), depth + 1)
+              next
+            end
+
             operation, unwrapped = unwrap_list_op(value)
             prefix = operation ? "#{operation} " : ""
             write_metadata_entry("#{prefix}#{key}", unwrapped, depth + 1)

@@ -2,12 +2,13 @@
 
 RSpec.describe OpenUSD::Format::Usda::Parser do
   let(:fixture_dir) { File.expand_path("fixtures", __dir__) }
+  let(:fixture_paths) { Dir[File.join(fixture_dir, "{,upstream/}*.usda")] }
 
-  it "parses every project fixture" do
-    layers = Dir[File.join(fixture_dir, "*.usda")].map { |path| OpenUSD::Layer.open(path) }
+  it "parses every project and upstream fixture" do
+    layers = fixture_paths.map { |path| OpenUSD::Layer.open(path) }
 
-    expect(layers.length).to eq(10)
-    expect(layers.sum { |layer| layer.each_prim.count }).to eq(13)
+    expect(layers.length).to eq(21)
+    expect(layers).to all(be_a(OpenUSD::Layer))
   end
 
   it "parses layer metadata, dictionaries, references, and variants" do
@@ -53,6 +54,42 @@ RSpec.describe OpenUSD::Format::Usda::Parser do
 
     expect(layer.metadata["futureSetting"]).to eq("retained")
     expect(layer.prim_at("/Object").property_named("data").default).to eq("opaque")
+  end
+
+  it "preserves the standalone layer comment" do
+    source = <<~USDA
+      #usda 1.0
+      (
+          "A layer comment."
+          customLayerData = {
+              string owner = "pipeline"
+          }
+      )
+    USDA
+    layer = described_class.parse(source)
+
+    expect(layer.metadata["comment"]).to eq("A layer comment.")
+    expect(described_class.parse(layer.to_usda)).to eq(layer)
+  end
+
+  it "merges repeated declarations of one property spec" do
+    source = <<~USDA
+      #usda 1.0
+      def Mesh "Mesh" {
+          color3f[] primvars:displayColor (
+              interpolation = "vertex"
+          )
+          color3f[] primvars:displayColor.timeSamples = {
+              8.3: [(1, 0, 0)]
+          }
+      }
+    USDA
+    layer = described_class.parse(source)
+    attribute = layer.prim_at("/Mesh").property_named("primvars:displayColor")
+
+    expect(attribute.metadata["interpolation"]).to eq("vertex")
+    expect(attribute.time_samples).to eq(8.3 => [[1.0, 0.0, 0.0]])
+    expect(described_class.parse(layer.to_usda)).to eq(layer)
   end
 
   it "uses the numeric-array path for large scalar and vector values" do

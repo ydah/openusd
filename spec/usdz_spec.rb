@@ -72,6 +72,20 @@ RSpec.describe OpenUSD::Format::Usdz do
     end
   end
 
+  it "opens the official OpenUSD USDA-root package fixture" do
+    encoded = File.read(File.expand_path("fixtures/upstream/single_usda.usdz.base64", __dir__))
+
+    Dir.mktmpdir do |directory|
+      package = File.join(directory, "single_usda.usdz")
+      File.binwrite(package, encoded.unpack1("m"))
+
+      reader = described_class::Reader.new(package)
+      expect(reader.entries.map(&:name)).to eq(["test.usda"])
+      expect(reader.entries.first.data_offset).to eq(64)
+      expect(OpenUSD::Stage.open(package).prim_at("/Root_USDA")).not_to be_nil
+    end
+  end
+
   it "rejects unsafe package inputs and corrupt archives" do
     Dir.mktmpdir do |directory|
       package = File.join(directory, "bad.usdz")
