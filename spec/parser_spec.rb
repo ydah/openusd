@@ -55,6 +55,22 @@ RSpec.describe OpenUSD::Format::Usda::Parser do
     expect(layer.prim_at("/Object").property_named("data").default).to eq("opaque")
   end
 
+  it "uses the numeric-array path for large scalar and vector values" do
+    integers = (0...1_000).to_a
+    points = (0...100).map { |index| "(#{index}, #{index + 1}, #{index + 2})" }
+    source = <<~USDA
+      #usda 1.0
+      def Mesh "Mesh" {
+          int[] indices = [#{integers.join(", ")}]
+          point3f[] points = [#{points.join(", ")}]
+      }
+    USDA
+    prim = described_class.parse(source).prim_at("/Mesh")
+
+    expect(prim.property_named("indices").default).to eq(integers)
+    expect(prim.property_named("points").default.last).to eq([99.0, 100.0, 101.0])
+  end
+
   it "reports malformed inputs with source positions" do
     invalid_sources = [
       "",

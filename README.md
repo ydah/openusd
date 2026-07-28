@@ -146,8 +146,9 @@ bundle exec rake bench
 ```
 
 The compatibility task validates generated USDA and USDZ files with the
-official `usdchecker`. The benchmark defaults to 100,000 generated prims; set
-`PRIMS` to choose another size.
+official `usdchecker`. The benchmark defaults to 100,000 generated prims and
+1,000,000 numeric array elements; set `PRIMS` or `NUMBERS` to choose other
+sizes.
 
 ## License
 

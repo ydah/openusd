@@ -12,6 +12,8 @@ module OpenUSD
         Token = Data.define(:type, :value, :line, :column, :raw)
         # Single-character grammar symbols.
         SYMBOLS = "(){}[]=,:."
+        # Numeric literal pattern shared by ordinary and fast-path scans.
+        NUMERIC_LITERAL = /[+-]?(?:(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?|inf|nan)/
         # Supported string escape translations.
         ESCAPES = {
           "n" => "\n", "r" => "\r", "t" => "\t", "b" => "\b",
@@ -51,6 +53,27 @@ module OpenUSD
           return scan_path if @scanner.peek(1) == "<"
 
           scan_bare_token
+        end
+
+        # Scan a flat or tuple-grouped numeric array without allocating tokens.
+        # @api private
+        # @return [Array, nil] values, or nil when the input needs normal lexing
+        def scan_numeric_array(component_count: nil)
+          rest = @scanner.rest
+          closing = rest.index("]")
+          return unless closing
+
+          body = rest[0...closing]
+          literals = body.scan(NUMERIC_LITERAL)
+          residue = body.gsub(NUMERIC_LITERAL, "").gsub(/[\s,()]/, "")
+          return unless residue.empty?
+          return if component_count && (literals.length % component_count).nonzero?
+
+          raw = rest[0..closing]
+          @scanner.pos += raw.bytesize
+          advance(raw)
+          values = literals.map { |literal| numeric_value(literal) }
+          component_count ? values.each_slice(component_count).to_a : values
         end
 
         private
@@ -176,6 +199,13 @@ module OpenUSD
                   end
           advance(raw)
           Token.new(:number, value, line, column, raw.freeze)
+        end
+
+        def numeric_value(raw)
+          return Float::NAN if raw.include?("nan")
+          return raw.start_with?("-") ? -Float::INFINITY : Float::INFINITY if raw.include?("inf")
+
+          raw.match?(/[.eE]/) ? Float(raw) : Integer(raw, 10)
         end
 
         def scan_identifier

@@ -207,10 +207,24 @@ module OpenUSD
 
         def parse_compound_value(expected_type)
           return parse_sequence("(", ")", expected_type) if symbol?("(")
-          return parse_sequence("[", "]", Types.base_type(expected_type.to_s)) if symbol?("[")
+          return parse_array(expected_type) if symbol?("[")
           return parse_dictionary if symbol?("{")
 
           error!("expected a value")
+        end
+
+        def parse_array(expected_type)
+          base_type = Types.base_type(expected_type.to_s)
+          component_count = Types::VECTOR_TYPES[base_type]
+          numeric = component_count || Types::FLOAT_TYPES.include?(base_type) ||
+                    Types::INTEGER_RANGES.key?(base_type)
+          return parse_sequence("[", "]", base_type) unless numeric
+
+          values = @lexer.scan_numeric_array(component_count: component_count)
+          return parse_sequence("[", "]", base_type) unless values
+
+          advance
+          values
         end
 
         def parse_sequence(opening, closing, expected_type)
