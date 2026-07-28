@@ -36,7 +36,7 @@ module OpenUSD
         def write_prim(prim, depth)
           declaration = "#{prim.specifier}#{type_declaration(prim.type_name)} #{quote(prim.name)}"
           metadata = prim.metadata.dup
-          metadata["references"] = ListOp.new(:prepend, reference_value(prim.references)) unless prim.references.empty?
+          write_references_metadata(metadata, prim) if prim.references_authored?
           append(declaration, depth)
           write_metadata_block(metadata, depth) unless metadata.empty?
           append("{", depth)
@@ -212,6 +212,8 @@ module OpenUSD
         end
 
         def format_reference(reference)
+          return "<#{reference.prim_path}>" if reference.internal?
+
           asset = format_asset(reference.asset_path)
           reference.prim_path ? "#{asset}<#{reference.prim_path}>" : asset
         end
@@ -259,6 +261,12 @@ module OpenUSD
 
         def reference_value(references)
           references.length == 1 ? references.first : references
+        end
+
+        def write_references_metadata(metadata, prim)
+          value = reference_value(prim.references)
+          value = ListOp.new(prim.reference_list_op, value) if prim.reference_list_op
+          metadata["references"] = value
         end
 
         def unwrap_list_op(value)

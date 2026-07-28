@@ -55,15 +55,43 @@ module OpenUSD
   class Reference
     attr_reader :asset_path, :prim_path
 
-    def initialize(asset_path, prim_path = nil)
-      @asset_path = asset_path.is_a?(AssetPath) ? asset_path : AssetPath.new(asset_path)
+    class << self
+      # Build an internal reference to a prim in the same layer stack.
+      # @return [Reference]
+      def internal(prim_path)
+        new(nil, prim_path)
+      end
+    end
+
+    def initialize(asset_path = nil, prim_path = nil)
+      if asset_path.is_a?(Path) && prim_path.nil?
+        prim_path = asset_path
+        asset_path = nil
+      end
+      raise OpenUSD::TypeError, "a reference requires an asset path or prim path" if asset_path.nil? && prim_path.nil?
+
+      @asset_path = normalize_asset_path(asset_path)
       @prim_path = prim_path.nil? ? nil : Path.parse(prim_path)
       freeze
+    end
+
+    # Whether this reference targets the current layer stack.
+    def internal?
+      asset_path.nil?
     end
 
     # Compare asset and target paths.
     def ==(other)
       other.is_a?(self.class) && asset_path == other.asset_path && prim_path == other.prim_path
+    end
+
+    private
+
+    def normalize_asset_path(value)
+      return if value.nil?
+      return value if value.is_a?(AssetPath)
+
+      AssetPath.new(value)
     end
   end
 

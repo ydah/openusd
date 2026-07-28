@@ -53,13 +53,14 @@ module OpenUSD
           type_name = expect_identifier unless current.type == :string
           name = expect(:string, description: "prim name").value
           metadata = symbol?("(") ? parse_metadata_block : {}
-          references = extract_references!(metadata)
+          references, reference_list_op, references_authored = ReferenceMetadata.extract(metadata)
           prim = PrimSpec.new(
             name,
             type_name: type_name,
             specifier: specifier,
             metadata: metadata,
-            references: references
+            references: references_authored ? references : PrimSpec::REFERENCES_UNAUTHORED,
+            reference_list_op: reference_list_op
           )
           parse_prim_body(prim)
           prim
@@ -265,15 +266,6 @@ module OpenUSD
           return [first.value, nil, current.value] if symbol?(":") || symbol?("=")
 
           [expect_identifier, first.value, "="]
-        end
-
-        def extract_references!(metadata)
-          value = metadata.delete("references")
-          return [] unless value
-
-          Array(unwrap_list(value)).map do |reference|
-            reference.is_a?(Reference) ? reference : Reference.new(reference)
-          end
         end
 
         def unwrap_list(value)

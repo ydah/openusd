@@ -97,14 +97,16 @@ module OpenUSD
     def compose_references(index, stack)
       authored = index.to_a
       authored.each do |destination, opinions|
-        opinions.grep(PrimSpec).each do |opinion|
-          opinion.references.each { |reference| map_reference(index, destination, opinion, reference, stack) }
+        effective_references(opinions).each do |reference, owner|
+          map_reference(index, destination, owner, reference, stack)
         end
       end
       index
     end
 
     def map_reference(index, destination, owner, reference, stack)
+      return map_internal_reference(index, destination, reference) if reference.internal?
+
       resolved = resolver.resolve(reference.asset_path, anchor: layer_identifier(owner))
       return unless resolved
 
@@ -113,13 +115,55 @@ module OpenUSD
       source_root = reference.prim_path || referenced_layer.default_prim&.path
       raise CompositionError, "reference #{resolved} has no target or defaultPrim" unless source_root
 
-      source_prefix = source_root.to_s
-      source_index.each do |source_path, source_opinions|
+      map_reference_subtree(index, destination, source_index, source_root.to_s)
+    end
+
+    def map_internal_reference(index, destination, reference)
+      source_prefix = reference.prim_path.to_s
+      raise CompositionError, "internal reference cycle detected at #{destination}" if source_prefix == destination
+
+      map_reference_subtree(index, destination, index, source_prefix)
+    end
+
+    def map_reference_subtree(index, destination, source_index, source_prefix)
+      source_index.to_a.each do |source_path, source_opinions|
         next unless source_path == source_prefix || source_path.start_with?("#{source_prefix}/")
 
         suffix = source_path.delete_prefix(source_prefix)
         index["#{destination}#{suffix}"].concat(source_opinions)
       end
+    end
+
+    def effective_references(opinions)
+      opinions.grep(PrimSpec).reverse_each.with_object([]) do |opinion, result|
+        next unless opinion.references_authored?
+
+        entries = opinion.references.map { |reference| [reference, opinion] }
+        apply_reference_list_op(result, entries, opinion.reference_list_op)
+      end
+    end
+
+    def apply_reference_list_op(result, entries, operation)
+      case operation
+      when :prepend then result.replace(unique_references(entries + result))
+      when :append, :add then result.replace(unique_references(result + entries))
+      when :delete then result.reject! { |reference, _owner| entries.any? { |entry| entry.first == reference } }
+      when :reorder then reorder_references(result, entries)
+      else result.replace(entries)
+      end
+    end
+
+    def unique_references(entries)
+      entries.each_with_object([]) do |entry, result|
+        result << entry unless result.any? { |candidate| candidate.first == entry.first }
+      end
+    end
+
+    def reorder_references(result, entries)
+      ordered = entries.filter_map do |entry|
+        result.find { |candidate| candidate.first == entry.first }
+      end
+      result.replace(ordered + result.reject { |candidate| ordered.include?(candidate) })
     end
 
     def layer_identifier(owner)

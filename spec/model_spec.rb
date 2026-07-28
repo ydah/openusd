@@ -60,6 +60,18 @@ RSpec.describe "OpenUSD core model" do
     expect(layer).to eq(OpenUSD::Layer.new(nil, metadata: layer.metadata, root_prims: [world]))
   end
 
+  it "distinguishes unauthored, internal, and explicitly empty references" do
+    unauthored = OpenUSD::PrimSpec.new("Unauthored")
+    internal = OpenUSD::PrimSpec.new("Internal")
+    empty = OpenUSD::PrimSpec.new("Empty", references: [], reference_list_op: nil)
+    internal.add_reference(nil, "/Source")
+
+    expect(unauthored).not_to be_references_authored
+    expect(internal.references.first).to be_internal
+    expect(empty).to be_references_authored
+    expect(empty.reference_list_op).to be_nil
+  end
+
   it "rejects malformed model input" do
     expect { OpenUSD::PrimSpec.new("bad-name") }.to raise_error(OpenUSD::PathError)
     expect { OpenUSD::AttributeSpec.new("a", "float", variability: :sometimes) }

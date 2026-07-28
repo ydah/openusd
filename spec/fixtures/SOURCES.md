@@ -24,6 +24,7 @@ at commit `ee47c679abde5b467a7b6a41f3b2285564a4222e`:
 | `usdchecker_material_binding.usda` | `pxr/usdValidation/bin/usdchecker/testenv/testUsdChecker/clean/cleanMaterialBindingAPIApplied.usda` |
 | `layer_comment.usda` | `pxr/usd/bin/usdcat/testenv/testUsdCatLayerMetadata/input.usda` |
 | `time_samples.usda` | `pxr/usd/bin/usdcompress/testenv/testTimeSample/CubeWithTimeSample.usda` |
+| `dancing_cubes.usda` | `extras/usd/examples/usdDancingCubesExample/dancingCubes.usda` |
 | `single_usda.usdz.base64` | `pxr/usd/usd/testenv/testUsdUsdzFileFormat/single_usda.usdz` |
 
 These files are covered by the Tomorrow Open Source Technology License 1.0.

@@ -97,6 +97,59 @@ RSpec.describe OpenUSD::Stage do
     end
   end
 
+  it "composes internal references and reference list edits" do
+    stage = described_class.create_in_memory
+    source = stage.root_layer.add_root_prim(OpenUSD::PrimSpec.new("Source", type_name: "Scope"))
+    source.add_child(OpenUSD::PrimSpec.new("Geometry", type_name: "Mesh"))
+    instance = stage.root_layer.add_root_prim(OpenUSD::PrimSpec.new("Instance", type_name: "Xform"))
+    instance.add_reference(nil, "/Source")
+
+    expect(stage.prim_at("/Instance/Geometry").type_name).to eq("Mesh")
+
+    instance.set_references([], operation: nil)
+    stage.invalidate!
+    expect(stage.prim_at("/Instance/Geometry")).to be_nil
+  end
+
+  it "applies strong reference list edits over sublayer references" do
+    Dir.mktmpdir do |directory|
+      asset = OpenUSD::Layer.create(File.join(directory, "asset.usda"))
+      asset.metadata["defaultPrim"] = "Model"
+      model = asset.add_root_prim(OpenUSD::PrimSpec.new("Model", type_name: "Scope"))
+      model.add_child(OpenUSD::PrimSpec.new("Geometry", type_name: "Mesh"))
+      asset.save
+
+      weak = OpenUSD::Layer.create(File.join(directory, "weak.usda"))
+      weak_instance = weak.add_root_prim(OpenUSD::PrimSpec.new("Instance"))
+      weak_instance.add_reference("asset.usda")
+      weak.save
+
+      root = OpenUSD::Layer.create(File.join(directory, "root.usda"))
+      root.metadata["subLayers"] = [OpenUSD::AssetPath.new("weak.usda")]
+      root_instance = root.add_root_prim(OpenUSD::PrimSpec.new("Instance", specifier: :over))
+      root_instance.set_references([OpenUSD::Reference.new("asset.usda")], operation: :delete)
+      root.save
+
+      stage = described_class.open(root.identifier)
+      expect(stage.prim_at("/Instance/Geometry")).to be_nil
+    end
+  end
+
+  it "rejects a self-referential internal reference" do
+    stage = described_class.create_in_memory
+    cycle = stage.root_layer.add_root_prim(OpenUSD::PrimSpec.new("Cycle"))
+    cycle.add_reference(nil, "/Cycle")
+
+    expect { stage.prim_at("/Cycle") }.to raise_error(OpenUSD::CompositionError, /internal reference cycle/)
+  end
+
+  it "composes the official internal-reference fixture" do
+    path = File.expand_path("fixtures/upstream/dancing_cubes.usda", __dir__)
+    stage = described_class.open(path)
+
+    expect(stage.prim_at("/Root").attribute("geomType").get).to eq("Cube")
+  end
+
   it "selects authored variants" do
     stage = described_class.open(File.expand_path("fixtures/variants.usda", __dir__))
     model = stage.prim_at("/Model")

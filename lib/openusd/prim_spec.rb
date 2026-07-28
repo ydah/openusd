@@ -5,17 +5,25 @@ module OpenUSD
   class PrimSpec
     # Valid authored specifier values.
     SPECIFIERS = %i[def over class].freeze
+    # Sentinel distinguishing no reference opinion from an authored empty list.
+    REFERENCES_UNAUTHORED = Object.new.freeze
+    # Supported reference list-edit operators.
+    REFERENCE_LIST_OPERATIONS = %i[prepend append delete reorder add explicit].freeze
 
-    attr_reader :name, :children, :properties, :metadata, :references, :variant_sets, :specifier
+    attr_reader :name, :children, :properties, :metadata, :references, :variant_sets, :specifier,
+                :reference_list_op
     attr_accessor :type_name, :parent
 
-    def initialize(name, type_name: nil, specifier: :def, metadata: {}, references: [], variant_sets: {})
+    def initialize(name, type_name: nil, specifier: :def, metadata: {}, references: REFERENCES_UNAUTHORED,
+                   reference_list_op: :prepend)
       @name = validate_name(name)
       @type_name = type_name&.to_s
       self.specifier = specifier
       @metadata = metadata.dup
-      @references = references.map { |reference| normalize_reference(reference) }
-      @variant_sets = variant_sets.dup
+      @references = []
+      @references_authored = false
+      set_references(references, operation: reference_list_op) unless references.equal?(REFERENCES_UNAUTHORED)
+      @variant_sets = {}
       @children = []
       @child_index = {}
       @properties = []
@@ -90,10 +98,31 @@ module OpenUSD
 
     # Add a reference composition arc.
     # @return [Reference]
-    def add_reference(asset_path, prim_path = nil)
+    def add_reference(asset_path = nil, prim_path = nil)
       reference = Reference.new(asset_path, prim_path)
       references << reference
+      @references_authored = true
+      @reference_list_op = :prepend if @reference_list_op.nil?
       reference
+    end
+
+    # Replace the authored references and list-edit operation.
+    # @return [Array<Reference>]
+    def set_references(values, operation: nil)
+      normalized_operation = operation&.to_sym
+      unless normalized_operation.nil? || REFERENCE_LIST_OPERATIONS.include?(normalized_operation)
+        raise OpenUSD::TypeError, "invalid reference list operation: #{operation.inspect}"
+      end
+
+      @references = Array(values).map { |reference| normalize_reference(reference) }
+      @reference_list_op = normalized_operation
+      @references_authored = true
+      references
+    end
+
+    # Whether a reference opinion, including an empty list, is authored.
+    def references_authored?
+      @references_authored
     end
 
     # Traverse authored descendants depth-first.
@@ -111,7 +140,8 @@ module OpenUSD
     def to_h
       {
         name: name, type_name: type_name, specifier: specifier,
-        metadata: metadata, references: references, variant_sets: variant_sets_to_h,
+        metadata: metadata, references: references, references_authored: references_authored?,
+        reference_list_op: reference_list_op, variant_sets: variant_sets_to_h,
         properties: semantic_properties(properties), children: children.map(&:to_h)
       }
     end

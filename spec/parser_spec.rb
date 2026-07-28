@@ -7,7 +7,7 @@ RSpec.describe OpenUSD::Format::Usda::Parser do
   it "parses every project and upstream fixture" do
     layers = fixture_paths.map { |path| OpenUSD::Layer.open(path) }
 
-    expect(layers.length).to eq(21)
+    expect(layers.length).to eq(22)
     expect(layers).to all(be_a(OpenUSD::Layer))
   end
 
@@ -20,6 +20,21 @@ RSpec.describe OpenUSD::Format::Usda::Parser do
     expect(reference.asset_path.path).to eq("minimal.usda")
     expect(reference.prim_path.to_s).to eq("/World")
     expect(variant_prim.variant_sets.fetch("color").keys).to contain_exactly("red", "blue")
+  end
+
+  it "preserves internal references and reference list operations" do
+    source = <<~USDA
+      #usda 1.0
+      def "Source" {}
+      def "Instance" (
+          delete references = [@old.usda@, </Source>]
+      ) {}
+    USDA
+    prim = described_class.parse(source).prim_at("/Instance")
+
+    expect(prim.reference_list_op).to eq(:delete)
+    expect(prim.references.last).to be_internal
+    expect(described_class.parse(described_class.parse(source).to_usda)).to eq(described_class.parse(source))
   end
 
   it "parses attributes, time samples, connections, and relationships" do
