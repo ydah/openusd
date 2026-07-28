@@ -114,6 +114,10 @@ openusd tree scene.usdz
 openusd zip scene.usdz scene.usda textures/albedo.png
 ```
 
+The repository includes a reproducible
+[CLI smoke-test procedure](docs/CLI_SMOKE_TEST.md) covering all three
+subcommands and official validation of their outputs.
+
 ## Supported scope
 
 Version 1.0 supports:
