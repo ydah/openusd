@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-RSpec.describe Openusd do
+RSpec.describe OpenUSD do
   it "has a version number" do
-    expect(Openusd::VERSION).not_to be nil
+    expect(described_class::VERSION).not_to be_nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "retains the generated namespace as a compatibility alias" do
+    expect(Openusd).to equal(described_class)
   end
 end
