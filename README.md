@@ -145,13 +145,15 @@ bundle install
 bundle exec rake spec
 bundle exec rake lint
 bundle exec rake doc
-bundle exec rake compatibility # requires usdchecker on PATH
+bundle exec rake compatibility # requires usdchecker and usdcat on PATH
 bundle exec rake golden:update  # intentionally refresh exact writer baselines
 bundle exec rake bench
 ```
 
 The compatibility task validates generated USDA and USDZ files with the
 official `usdchecker`, then parses every golden USDA output with `usdcat`.
+In CI, where the `usd-core` wheel does not install those executables, the task
+uses the equivalent official `UsdValidation` and `Sdf` Python APIs.
 The benchmark defaults to 100,000 generated prims and a 1,000,000-vertex Mesh,
 reports elapsed time and resident-memory growth, and enforces a five-second
 100,000-Prim budget. Set `PRIMS`, `VERTICES`, or `PRIM_BUDGET` to adjust it.

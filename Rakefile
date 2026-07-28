@@ -36,11 +36,12 @@ namespace :golden do
   end
 end
 
-desc "Validate generated USDA and USDZ with the official usdchecker"
-task :compatibility do
-  require_relative "lib/openusd"
+module CompatibilityTask
+  extend Rake::DSL
 
-  Dir.mktmpdir("openusd-compatibility") do |directory|
+  module_function
+
+  def write_assets(directory)
     usda_path = File.join(directory, "scene.usda")
     usdz_path = File.join(directory, "scene.usdz")
     stage = OpenUSD::Stage.create(usda_path)
@@ -51,18 +52,39 @@ task :compatibility do
     mesh.face_vertex_indices = [0, 1, 2]
     mesh.extent = [[0, 0, 0], [1, 1, 0]]
     stage.root_layer.metadata.merge!(
-      "defaultPrim" => "World",
-      "metersPerUnit" => 1.0,
-      "upAxis" => "Y"
+      "defaultPrim" => "World", "metersPerUnit" => 1.0, "upAxis" => "Y"
     )
     stage.save
     stage.export(usdz_path)
-    [usda_path, usdz_path].each { |path| sh ENV.fetch("USDCHECKER", "usdchecker"), path }
+    [usda_path, usdz_path]
+  end
 
+  def validate(assets)
+    python = ENV.fetch("USD_CORE_PYTHON", nil)
+    return validate_with_python(python, assets) if python
+
+    assets.each { |path| sh ENV.fetch("USDCHECKER", "usdchecker"), path }
     usdcat = ENV.fetch("USDCAT", "usdcat")
-    Dir[File.expand_path("spec/fixtures/golden/*.usda", __dir__)].each do |path|
-      sh usdcat, path, out: File::NULL
-    end
+    golden_paths.each { |path| sh usdcat, path, out: File::NULL }
+  end
+
+  def validate_with_python(python, assets)
+    validator = File.expand_path("spec/support/usd_core_check.py", __dir__)
+    sh python, validator, "validate", *assets
+    sh python, validator, "parse", *golden_paths
+  end
+
+  def golden_paths
+    Dir[File.expand_path("spec/fixtures/golden/*.usda", __dir__)]
+  end
+end
+
+desc "Validate generated USDA and USDZ with the official usdchecker"
+task :compatibility do
+  require_relative "lib/openusd"
+
+  Dir.mktmpdir("openusd-compatibility") do |directory|
+    CompatibilityTask.validate(CompatibilityTask.write_assets(directory))
   end
 end
 
