@@ -1,0 +1,11 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "openusd"
+        int revision = 1
+    }
+)
+
+def Xform "World"
+{
+}

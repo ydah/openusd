@@ -2,10 +2,11 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in openusd.gemspec
 gemspec
 
-gem "irb"
-gem "rake", "~> 13.0"
-
-gem "rspec", "~> 3.0"
+gem "irb", require: false
+gem "rake", "~> 13.0", require: false
+gem "rspec", "~> 3.13", require: false
+gem "rubocop", "~> 1.76", require: false
+gem "simplecov", "~> 0.22", require: false
+gem "yard", "~> 0.9", require: false

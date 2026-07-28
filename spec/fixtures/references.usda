@@ -1,0 +1,7 @@
+#usda 1.0
+
+def Xform "Instance" (
+    prepend references = @minimal.usda@</World>
+)
+{
+}

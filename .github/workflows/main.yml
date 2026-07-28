@@ -11,13 +11,16 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }}
     strategy:
+      fail-fast: false
       matrix:
         ruby:
-          - '4.0'
+          - "3.2"
+          - "3.3"
+          - "3.4"
 
     steps:
       - uses: actions/checkout@v6
@@ -28,5 +31,31 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-      - name: Run the default task
-        run: bundle exec rake
+      - name: Run specs
+        run: bundle exec rake spec
+      - name: Run lint
+        if: matrix.ruby == '3.4'
+        run: bundle exec rake lint
+      - name: Build documentation
+        if: matrix.ruby == '3.4'
+        run: bundle exec rake doc
+      - name: Build gem
+        if: matrix.ruby == '3.4'
+        run: bundle exec gem build openusd.gemspec
+
+  compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install usd-core
+      - name: Validate generated USDA and USDZ
+        run: bundle exec rake compatibility
