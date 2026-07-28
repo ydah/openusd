@@ -5,6 +5,14 @@ require_relative "openusd/errors"
 require_relative "openusd/path"
 require_relative "openusd/value"
 require_relative "openusd/types"
+require_relative "openusd/attribute_spec"
+require_relative "openusd/relationship_spec"
+require_relative "openusd/prim_spec"
+require_relative "openusd/format/registry"
+require_relative "openusd/layer"
+require_relative "openusd/format/usda/lexer"
+require_relative "openusd/format/usda/parser"
+require_relative "openusd/format/usda/writer"
 
 module OpenUSD
 end

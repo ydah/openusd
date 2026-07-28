@@ -34,20 +34,35 @@ module OpenUSD
   end
 
   # Preserves a USDA list-edit operator together with its value.
-  ListOp = Data.define(:operation, :value) do
+  class ListOp
+    attr_reader :operation, :value
+
     def initialize(operation, value)
-      super(operation: operation.to_sym, value: value)
+      @operation = operation.to_sym
+      @value = value
       freeze
+    end
+
+    def ==(other)
+      other.is_a?(self.class) && operation == other.operation && value == other.value
     end
   end
 
   # A layer reference and optional target prim.
-  Reference = Data.define(:asset_path, :prim_path) do
+  class Reference
+    attr_reader :asset_path, :prim_path
+
     def initialize(asset_path, prim_path = nil)
-      asset = asset_path.is_a?(AssetPath) ? asset_path : AssetPath.new(asset_path)
-      target = prim_path.nil? ? nil : Path.parse(prim_path)
-      super(asset_path: asset, prim_path: target)
+      @asset_path = asset_path.is_a?(AssetPath) ? asset_path : AssetPath.new(asset_path)
+      @prim_path = prim_path.nil? ? nil : Path.parse(prim_path)
       freeze
     end
+
+    def ==(other)
+      other.is_a?(self.class) && asset_path == other.asset_path && prim_path == other.prim_path
+    end
   end
+
+  # Authored contents of one variant choice.
+  Variant = Data.define(:properties, :children)
 end
