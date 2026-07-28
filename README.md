@@ -142,13 +142,15 @@ bundle exec rake spec
 bundle exec rake lint
 bundle exec rake doc
 bundle exec rake compatibility # requires usdchecker on PATH
+bundle exec rake golden:update  # intentionally refresh exact writer baselines
 bundle exec rake bench
 ```
 
 The compatibility task validates generated USDA and USDZ files with the
-official `usdchecker`. The benchmark defaults to 100,000 generated prims and
-1,000,000 numeric array elements; set `PRIMS` or `NUMBERS` to choose other
-sizes.
+official `usdchecker`, then parses every golden USDA output with `usdcat`.
+The benchmark defaults to 100,000 generated prims and a 1,000,000-vertex Mesh,
+reports elapsed time and resident-memory growth, and enforces a five-second
+100,000-Prim budget. Set `PRIMS`, `VERTICES`, or `PRIM_BUDGET` to adjust it.
 
 ## License
 
