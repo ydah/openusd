@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Read, compose, edit, and write OpenUSD assets with a pure Ruby library and CLI.">
+    <meta name="theme-color" content="#0f172a">
+    <meta property="og:title" content="openusd — OpenUSD in pure Ruby">
+    <meta property="og:description" content="Build USDA and USDZ pipelines without native dependencies.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ydah.github.io/openusd/">
+    <link rel="canonical" href="https://ydah.github.io/openusd/">
+    <link rel="stylesheet" href="./style.css">
+    <title>openusd — OpenUSD in pure Ruby</title>
+  </head>
+  <body class="overflow-x-hidden bg-slate-50 font-sans text-slate-900 antialiased selection:bg-red-700 selection:text-white">
+    <header class="border-b border-slate-300 bg-slate-50">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
+        <a class="flex items-center gap-3 rounded-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700" href="#top">
+          <svg class="size-7 text-red-700" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M16 2 29 9v14l-13 7L3 23V9l13-7Zm0 3.6L7.2 10.3 16 15l8.8-4.7L16 5.6ZM6 12.8v8.4l8.5 4.6v-8.4L6 12.8Zm11.5 13 8.5-4.6v-8.4l-8.5 4.6v8.4Z" fill="currentColor"/>
+          </svg>
+          <span>openusd</span>
+          <span class="hidden border-l border-slate-300 pl-3 text-sm font-normal text-slate-600 sm:inline">Pure Ruby</span>
+        </a>
+        <nav class="flex items-center gap-5 text-sm font-medium" aria-label="Primary navigation">
+          <a class="hidden rounded-sm text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700 sm:inline" href="#capabilities">Capabilities</a>
+          <a class="hidden rounded-sm text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700 sm:inline" href="#example">Example</a>
+          <a class="rounded-sm border border-slate-400 px-4 py-2 hover:border-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700" href="https://github.com/ydah/openusd">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="mx-auto grid min-h-[44rem] max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-28">
+        <div class="min-w-0">
+          <p class="mb-7 flex items-center gap-3 text-sm font-medium text-slate-600">
+            <svg class="size-2 text-red-700" viewBox="0 0 8 8" aria-hidden="true"><path d="M0 0h8v8H0z" fill="currentColor"/></svg>
+            Version <span class="tabular-nums">1.0.0</span> for Ruby <span class="tabular-nums">3.2+</span>
+          </p>
+          <h1 class="max-w-4xl text-balance text-5xl font-bold leading-[1.02] sm:text-7xl lg:text-8xl">OpenUSD,<br>in Ruby alone.</h1>
+          <p class="mt-8 max-w-2xl text-pretty text-lg leading-8 text-slate-600 sm:text-xl">Read, compose, edit, and write USDA and USDZ assets without native libraries. Built for pipeline automation, validation, conversion, and scene generation.</p>
+          <div class="mt-10 flex flex-wrap gap-4">
+            <a class="rounded-sm bg-red-700 px-6 py-3 font-semibold text-white hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700" href="https://rubygems.org/gems/openusd">Install the gem</a>
+            <a class="rounded-sm border border-slate-400 px-6 py-3 font-semibold hover:border-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700" href="https://github.com/ydah/openusd#readme">Read the docs</a>
+          </div>
+          <div class="mt-8 flex max-w-xl items-center justify-between gap-4 border-y border-slate-300 py-4 font-mono text-sm">
+            <code>gem install openusd</code>
+            <span class="text-slate-500">no native build</span>
+          </div>
+        </div>
+
+        <div class="relative min-w-0 overflow-hidden border border-slate-700 bg-slate-900 p-5 text-slate-200 shadow-xl sm:p-8" aria-label="OpenUSD scene graph example">
+          <div class="mb-8 flex items-center justify-between border-b border-slate-700 pb-4 text-sm">
+            <span class="font-mono text-slate-400">scene.usda</span>
+            <span class="flex items-center gap-2"><svg class="size-2 text-red-700" viewBox="0 0 8 8" aria-hidden="true"><path d="M0 0h8v8H0z" fill="currentColor"/></svg>composed</span>
+          </div>
+          <svg class="mx-auto mb-10 w-full max-w-sm text-slate-300" viewBox="0 0 420 260" role="img" aria-label="Wireframe cube inside an OpenUSD coordinate grid">
+            <g fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m115 77 132-38 91 64-132 40-91-66Z"/>
+              <path d="m115 77 1 105 91 53-1-92m132-40v101l-131 31"/>
+              <path d="m116 182 132-42 90 64M247 39l1 101"/>
+            </g>
+            <path d="M34 220h352M73 240l276-86M177 250l-91-66" fill="none" stroke="#475569" stroke-width="1"/>
+            <circle cx="207" cy="235" r="5" fill="#b91c1c"/>
+          </svg>
+          <div class="space-y-3 font-mono text-sm sm:text-base">
+            <p><span class="text-red-400">/World</span> <span class="text-slate-400">&lt;Xform&gt;</span></p>
+            <p class="ml-7 border-l border-slate-600 pl-5"><span class="text-red-400">/Camera</span> <span class="text-slate-400">&lt;Camera&gt;</span></p>
+            <p class="ml-7 border-l border-slate-600 pl-5"><span class="text-red-400">/Model</span> <span class="text-slate-400">&lt;Xform&gt;</span></p>
+            <p class="ml-14 border-l border-slate-600 pl-5"><span class="text-red-400">/Cube</span> <span class="text-slate-400">&lt;Mesh&gt;</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="border-y border-slate-300 bg-white" aria-label="Project facts">
+        <div class="mx-auto grid max-w-7xl divide-y divide-slate-300 px-6 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:px-8">
+          <dl class="py-8 sm:px-8 sm:first:pl-0"><dt class="text-sm text-slate-500">Runtime dependencies</dt><dd class="mt-2 text-4xl font-bold tabular-nums">0</dd></dl>
+          <dl class="py-8 sm:px-8"><dt class="text-sm text-slate-500">Asset formats</dt><dd class="mt-2 text-4xl font-bold">USDA + USDZ</dd></dl>
+          <dl class="py-8 sm:px-8"><dt class="text-sm text-slate-500">License</dt><dd class="mt-2 text-4xl font-bold">MIT</dd></dl>
+        </div>
+      </section>
+
+      <section id="capabilities" class="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+        <div class="grid gap-14 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <h2 class="max-w-md text-balance text-4xl font-bold leading-tight sm:text-5xl">From scene path to portable package.</h2>
+            <p class="mt-6 max-w-md text-pretty leading-7 text-slate-600">A deliberately focused implementation of the formats and operations Ruby pipelines use most.</p>
+          </div>
+          <div class="border-t border-slate-400">
+            <article class="grid gap-3 border-b border-slate-300 py-7 sm:grid-cols-[10rem_1fr]"><h3 class="text-xl font-bold">Read</h3><p class="max-w-xl text-pretty leading-7 text-slate-600">Parse layers, metadata, relationships, time samples, variants, and typed values.</p></article>
+            <article class="grid gap-3 border-b border-slate-300 py-7 sm:grid-cols-[10rem_1fr]"><h3 class="text-xl font-bold">Compose</h3><p class="max-w-xl text-pretty leading-7 text-slate-600">Resolve authored sublayers and references with explicit missing-asset policies.</p></article>
+            <article class="grid gap-3 border-b border-slate-300 py-7 sm:grid-cols-[10rem_1fr]"><h3 class="text-xl font-bold">Author</h3><p class="max-w-xl text-pretty leading-7 text-slate-600">Create stages, prims, attributes, schemas, and deterministic USDA output.</p></article>
+            <article class="grid gap-3 border-b border-slate-300 py-7 sm:grid-cols-[10rem_1fr]"><h3 class="text-xl font-bold">Package</h3><p class="max-w-xl text-pretty leading-7 text-slate-600">Build and inspect aligned USDZ archives with path, CRC, and bounds validation.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="example" class="bg-slate-900 text-slate-100">
+        <div class="mx-auto grid max-w-7xl gap-12 px-6 py-24 lg:grid-cols-[0.7fr_1.3fr] lg:px-8 lg:py-32">
+          <div>
+            <h2 class="text-balance text-4xl font-bold sm:text-5xl">A stage in twelve lines.</h2>
+            <p class="mt-6 max-w-md text-pretty leading-7 text-slate-400">The Ruby API follows OpenUSD vocabulary, so scene code reads like the asset it creates.</p>
+          </div>
+          <pre class="min-w-0 max-w-full overflow-x-auto border-l-4 border-red-700 bg-slate-950 p-6 text-sm leading-7 shadow-xl sm:p-8"><code><span class="text-red-400">require</span> "openusd"
+
+stage = OpenUSD::Stage.create("scene.usda")
+stage.define_prim("/World", "Xform")
+cube = stage.define_prim("/World/Cube", "Cube")
+
+cube.create_attribute("size", "double").set(2.0)
+cube.create_attribute(
+  "xformOp:translate", "double3"
+).set([0, 1, 0])
+
+stage.save</code></pre>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-4xl px-6 py-24 text-center lg:py-32">
+        <h2 class="text-balance text-4xl font-bold sm:text-5xl">Keep the pipeline Ruby.</h2>
+        <p class="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-8 text-slate-600">Add OpenUSD asset tooling without compiling bindings or shipping a native runtime.</p>
+        <a class="mt-9 inline-block rounded-sm bg-red-700 px-7 py-3 font-semibold text-white hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-red-700" href="https://rubygems.org/gems/openusd">Get openusd on RubyGems</a>
+      </section>
+    </main>
+
+    <footer class="border-t border-slate-300">
+      <div class="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+        <p>openusd is MIT licensed.</p>
+        <p>Built for the Ruby and OpenUSD communities.</p>
+      </div>
+    </footer>
+  </body>
+</html>

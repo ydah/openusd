@@ -8,6 +8,7 @@
 /pkg/
 /spec/reports/
 /tmp/
+/node_modules/
 Gemfile.lock
 .rspec_status
 *.swp

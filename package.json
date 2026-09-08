@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "build:pages": "tailwindcss -i docs/input.css -o docs/style.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}
